@@ -1,7 +1,7 @@
 import os
 import re
-import csv
-from sklearn.metrics import classification_report
+import pandas as pd
+from sklearn.metrics import classification_report, accuracy_score
 from sklearn.metrics import matthews_corrcoef
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -31,47 +31,58 @@ def get_classification_report(y_test, y_pred):
     """
     params: y_test: the true labels
             y_pred: the predicted labels
-            return: precision_macro, recall_macro, f1_macro, precision_weighted, recall_weighted, f1_weighted, accuracy_score
+            return: a dictionary containing the classification report
     """
     # Get the classification report
-    report = classification_report(y_test, y_pred, output_dict=True, digits=4)
-    precision_macro = report["macro avg"]["precision"]
-    recall_macro = report["macro avg"]["recall"]
-    f1_macro = report["macro avg"]["f1-score"]
-    precision_weighted = report["weighted avg"]["precision"]
-    recall_weighted = report["weighted avg"]["recall"]
-    f1_weighted = report["weighted avg"]["f1-score"]
-    accuracy_score = report["accuracy"]
-    matthews_correlation_coefficient = matthews_corrcoef(y_test, y_pred)
-    return precision_macro, recall_macro, f1_macro, precision_weighted, recall_weighted, f1_weighted, accuracy_score, matthews_correlation_coefficient
+    report = classification_report(y_test, y_pred, output_dict=True, zero_division=1)
+    print(f"Classification report:\n{report}")
+    metrics = {}
+    metrics["precision_macro"] = "{:.4f}".format(report["macro avg"]["precision"])
+    metrics["recall_macro"] = "{:.4f}".format(report["macro avg"]["recall"])
+    metrics["f1_macro"] = "{:.4f}".format(report["macro avg"]["f1-score"])
+    metrics["precision_weighted"] = "{:.4f}".format(report["weighted avg"]["precision"])
+    metrics["recall_weighted"] = "{:.4f}".format(report["weighted avg"]["recall"])
+    metrics["f1_weighted"] = "{:.4f}".format(report["weighted avg"]["f1-score"])
+    metrics["accuracy_score"] = "{:.4f}".format(accuracy_score(y_test, y_pred))
+    metrics["matthews_correlation_coefficient"] = "{:.4f}".format(matthews_corrcoef(y_test, y_pred))
+    return metrics
 
 
-def save_classification_report(method, precision_macro, recall_macro, f1_macro, precision_weighted, recall_weighted, f1_weighted, accuracy_score, matthews_correlation_coefficient):
+
+def save_classification_report(method, metrics, save_path, append=False):
     """
     :param method: the method name
-    :param precision_macro: the precision macro
-    :param recall_macro: the recall macro
-    :param f1_macro: the f1 macro
-    :param precision_weighted: the precision weighted
-    :param recall_weighted: the recall weighted
-    :param f1_weighted: the f1 weighted
-    :param accuracy_score: the accuracy score
+    :param metrics: a dictionary containing the classification report
+    :param save_path: the path where the results will be saved
+    :param append: whether to append to the output file or overwrite it (default: False)
     """
-    with open("results\\classification_report.csv", "a", newline="") as f:
-        # Create a CSV writer
-        writer = csv.DictWriter(f, fieldnames=['Method', 'Precision Macro',
-                                               'Recall Macro', 'F1 Macro', 'Precision Weighted',
-                                               'Recall Weighted', 'F1 Weighted', 'Accuracy', 'MCC'])
+    # Input validation
+    for param in metrics.values():
+        if not isinstance(float(param), float) or not 0 <= float(param) <= 1:
+            raise ValueError("Invalid parameter value: all metric parameters (except MCC) must be floats between 0 and 1.")
+    if not isinstance(float(metrics["matthews_correlation_coefficient"]), float) or not -1 <= float(metrics["matthews_correlation_coefficient"]) <= 1:
+        raise ValueError("Invalid parameter value: MCC must be a float between -1 and 1.")
 
-        # Write the header row if the file is empty
-        if f.tell() == 0:
-            writer.writeheader()
+    # File I/O error handling
+    try:
+        # Create a DataFrame to store the classification report
+        df = pd.DataFrame({
+            "Method": [method],
+            "Precision Macro": [metrics["precision_macro"]],
+            "Recall Macro": [metrics["recall_macro"]],
+            "F1 Macro": [metrics["f1_macro"]],
+            "Precision Weighted": [metrics["precision_weighted"]],
+            "Recall Weighted": [metrics["recall_weighted"]],
+            "F1 Weighted": [metrics["f1_weighted"]],
+            "Accuracy": [metrics["accuracy_score"]],
+            "MCC": [metrics["matthews_correlation_coefficient"]]
+        })
 
-        # Write the data row
-        writer.writerow({'Method': method, 'Precision Macro': precision_macro,
-                         'Recall Macro': recall_macro, 'F1 Macro': f1_macro,
-                         'Precision Weighted': precision_weighted, 'Recall Weighted': recall_weighted,
-                         'F1 Weighted': f1_weighted, 'Accuracy': accuracy_score, 'MCC': matthews_correlation_coefficient})
+        # Write the DataFrame to a CSV file
+        mode = "a" if append else "w"
+        df.to_csv(save_path, mode=mode, header=not append, index=False)
+    except (OSError, pd.errors.PythonException) as e:
+        print(f"An error occurred while writing the classification report to {save_path}: {e}")
 
 
 def create_plots(method, train_loss_values, val_loss_values, train_acc_values, val_acc_values):

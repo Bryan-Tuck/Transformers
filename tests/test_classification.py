@@ -1,8 +1,10 @@
 import pytest
-import pandas as pd
 import sys
-import numpy as np
 import os
+import pandas as pd
+import numpy as np
+
+# Add the path to the utils.py file to the system path
 sys.path.append('E:\Transformers')
 
 # Import the functions to test

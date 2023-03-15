@@ -19,7 +19,7 @@ def get_method_name_from_file(file: str) -> str:
     :return: the method name
     """
     match = re.search(
-        r'method_(\d+)', file)  # get the method number from the file name
+        r'olid_(\d+)', file)  # get the method number from the file name
     if match:  # check if the method number is found
         return match.group(1)
     else:
@@ -34,34 +34,36 @@ def get_classification_report(y_test, y_pred):
             return: a dictionary containing the classification report
     """
     # Get the classification report
-    report = classification_report(y_test, y_pred, output_dict=True, zero_division=1)
+    report = classification_report(
+        y_test, y_pred, output_dict=True, zero_division=1)
     print(f"Classification report:\n{report}")
     metrics = {}
-    metrics["precision_macro"] = "{:.4f}".format(report["macro avg"]["precision"])
-    metrics["recall_macro"] = "{:.4f}".format(report["macro avg"]["recall"])
-    metrics["f1_macro"] = "{:.4f}".format(report["macro avg"]["f1-score"])
-    metrics["precision_weighted"] = "{:.4f}".format(report["weighted avg"]["precision"])
-    metrics["recall_weighted"] = "{:.4f}".format(report["weighted avg"]["recall"])
-    metrics["f1_weighted"] = "{:.4f}".format(report["weighted avg"]["f1-score"])
-    metrics["accuracy_score"] = "{:.4f}".format(accuracy_score(y_test, y_pred))
-    metrics["matthews_correlation_coefficient"] = "{:.4f}".format(matthews_corrcoef(y_test, y_pred))
+    metrics["precision_macro"] = report["macro avg"]["precision"]
+    metrics["recall_macro"] = report["macro avg"]["recall"]
+    metrics["f1_macro"] = report["macro avg"]["f1-score"]
+    metrics["precision_weighted"] = report["weighted avg"]["precision"]
+    metrics["recall_weighted"] = report["weighted avg"]["recall"]
+    metrics["f1_weighted"] = report["weighted avg"]["f1-score"]
+    metrics["accuracy_score"] = accuracy_score(y_test, y_pred)
+    metrics["matthews_correlation_coefficient"] = matthews_corrcoef(y_test, y_pred)
     return metrics
 
 
-
-def save_classification_report(method, metrics, save_path, append=False):
+def save_classification_report(method, metrics, save_dir, append=False):
     """
     :param method: the method name
     :param metrics: a dictionary containing the classification report
-    :param save_path: the path where the results will be saved
+    :param save_dir: the directory where the results will be saved
     :param append: whether to append to the output file or overwrite it (default: False)
     """
     # Input validation
     for param in metrics.values():
         if not isinstance(float(param), float) or not 0 <= float(param) <= 1:
-            raise ValueError("Invalid parameter value: all metric parameters (except MCC) must be floats between 0 and 1.")
-    if not isinstance(float(metrics["matthews_correlation_coefficient"]), float) or not -1 <= float(metrics["matthews_correlation_coefficient"]) <= 1:
-        raise ValueError("Invalid parameter value: MCC must be a float between -1 and 1.")
+            raise ValueError(
+                "Invalid parameter value: all metric parameters (except MCC) must be floats between 0 and 1.")
+        if not isinstance(float(metrics["matthews_correlation_coefficient"]), float) or not -1 <= float(metrics["matthews_correlation_coefficient"]) <= 1:
+            raise ValueError(
+                "Invalid parameter value: MCC must be a float between -1 and 1.")
 
     # File I/O error handling
     try:
@@ -78,11 +80,19 @@ def save_classification_report(method, metrics, save_path, append=False):
             "MCC": [metrics["matthews_correlation_coefficient"]]
         })
 
+        # Check if the directory to save the report exists, create it if it does not
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
         # Write the DataFrame to a CSV file
+        file_path = os.path.join(save_dir, "report.csv")
         mode = "a" if append else "w"
-        df.to_csv(save_path, mode=mode, header=not append, index=False)
-    except (OSError, pd.errors.PythonException) as e:
-        print(f"An error occurred while writing the classification report to {save_path}: {e}")
+        df.to_csv(file_path, mode=mode, header=not append, index=False)
+        print(f"Classification report saved to {file_path}")
+    except Exception as e:
+        print(
+            f"An error occurred while writing the classification report to {save_dir}: {e}")
+
 
 
 def create_plots(method, train_loss_values, val_loss_values, train_acc_values, val_acc_values):
@@ -115,7 +125,7 @@ def create_plots(method, train_loss_values, val_loss_values, train_acc_values, v
     plt.suptitle(f'Training and Validation Loss/Accuracy for {method}')
 
     # Save the plots to a folder with the method name
-    plot_directory = f'plots'
+    plot_directory = f'E:/Transformers/plots'
     if not os.path.exists(plot_directory):
         os.makedirs(plot_directory)
     plt.savefig(f'{plot_directory}\\{method}_plots.png')

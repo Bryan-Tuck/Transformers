@@ -22,16 +22,17 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # Hyperparameters
-BATCH_SIZE = 32  # 16, 32, 64, 128, 256
+BATCH_SIZE = 16  # 16, 32, 64, 128, 256
 DEVICE = torch.device("cuda" if torch.cuda.is_available()
                       else "cpu")  # Use GPU if available
 TOKENIZER = AutoTokenizer.from_pretrained(
-    'bert-base-uncased')  # Load the tokenizer
-MODEL_TYPE = 'bert-base-uncased'  # model type
-EPOCHS = 3  # Number of epochs to train the model
+    "vinai/bertweet-covid19-base-cased", normalization=True)  # Load the tokenizer
+MODEL_TYPE = "vinai/bertweet-covid19-base-cased"  # model type
+EPOCHS = 2  # Number of epochs to train the model
 LEARNING_RATE = 2e-5  # 2e-5 is the default learning rate for BERT
 N_CLASSES = 2  # Number of classes in the dataset
-DIRECTORY = 'olid'  # Directory where the csv files are stored
+DIRECTORY = 'E:/Transformers/data'  # Directory where the csv files are stored
+RESULTS_PATH = 'E:/Transformers/results'  # Directory where the results will be saved
 
 def load_data(file_path):
     """
@@ -40,7 +41,7 @@ def load_data(file_path):
     :param file_path: str, path to the CSV file containing the dataset
     :return: tuple, (train, val, test) DataFrames
     """
-    data = pd.read_csv(file_path, usecols=['tweet_clean', 'label'])
+    data = pd.read_csv(file_path, usecols=['tweet', 'label'])
     train, val = train_test_split(data, test_size=0.2, random_state=RANDOM_SEED)
     val, test = train_test_split(val, test_size=0.5, random_state=RANDOM_SEED)
 
@@ -55,11 +56,11 @@ def get_data_loaders(train, val, test):
     :param test: DataFrame, the test set
     :return: tuple, (train_data_loader, val_data_loader, test_data_loader) PyTorch DataLoader objects
     """
-    train_tweets = train.tweet_clean.values
+    train_tweets = train.tweet.values
     train_labels = train.label.values
-    val_tweets = val.tweet_clean.values
+    val_tweets = val.tweet.values
     val_labels = val.label.values
-    test_tweets = test.tweet_clean.values
+    test_tweets = test.tweet.values
     test_labels = test.label.values
 
     train_data_loader = get_data_loader(train_tweets, train_labels, TOKENIZER, BATCH_SIZE)
@@ -97,11 +98,6 @@ def main():
             method = get_method_name_from_file(file)
             print(f'Running method {method}')
 
-            # Initialize lists to store the scores for each run
-            (precision_macro_scores, recall_macro_scores, f1_macro_scores,
-             precision_weighted_scores, recall_weighted_scores, f1_weighted_scores,
-             accuracy_scores, mcc_scores) = ([] for _ in range(8))
-
             # Load your data
             train, val, test = load_data(file_path)
 
@@ -128,34 +124,19 @@ def main():
             y_test, y_pred = trainer.test()
 
             # Generate evaluation report
-            (precision_macro, recall_macro, f1_macro, precision_weighted,
-             recall_weighted, f1_weighted, accuracy_score, matthews_correlation_coefficient) = get_classification_report(y_test, y_pred)
-
-            # Store the scores
-            precision_macro_scores.append(precision_macro)
-            recall_macro_scores.append(recall_macro)
-            f1_macro_scores.append(f1_macro)
-
-            precision_weighted_scores.append(precision_weighted)
-            recall_weighted_scores.append(recall_weighted)
-            f1_weighted_scores.append(f1_weighted)
-            accuracy_scores.append(accuracy_score)
-            mcc_scores.append(matthews_correlation_coefficient)
+            metrics = get_classification_report(y_test, y_pred)
 
             # Save the scores
-            save_classification_report(method, precision_macro, recall_macro,
-                                       f1_macro, precision_weighted, recall_weighted,
-                                       f1_weighted, accuracy_score, matthews_correlation_coefficient)
+            save_classification_report(method, metrics, save_dir=RESULTS_PATH, append=True)
 
             # Save the model
-            save_path = f'saved_models\method_{method}.pth'
-            torch.save(model.state_dict(), save_path)
+            model_path = f'E:/Transformers/saved_models/method_{method}.pth'
+            torch.save(model.state_dict(), model_path)
             torch.cuda.empty_cache()
 
     end_time = time.time()
     total_time = end_time - start_time
     print("Total running time:", total_time, "seconds")
-
 
 if __name__ == '__main__':
     main()

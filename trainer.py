@@ -35,7 +35,7 @@ class Trainer:
     def train(self, num_epochs, use_scheduler=True):
         """ 
         :param num_epochs: number of epochs to train the model
-        "param use_scheduler: whether to use learning rate scheduler or not
+        :param use_scheduler: whether to use learning rate scheduler or not
         """
         self.model.train()  # set model to training mode
         # total number of training steps

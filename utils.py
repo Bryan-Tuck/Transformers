@@ -16,7 +16,7 @@ sns.set_palette(sns.color_palette(HAPPY_COLORS_PALETTE))
 def get_method_name_from_file(file: str) -> str:
     """
     :param file: the file name
-    :return: the method name
+    :returns: the method name
     """
     match = re.search(
         r'olid_(\d+)', file)  # get the method number from the file name
@@ -29,9 +29,9 @@ def get_method_name_from_file(file: str) -> str:
 
 def get_classification_report(y_test, y_pred):
     """
-    params: y_test: the true labels
-            y_pred: the predicted labels
-            return: a dictionary containing the classification report
+    :param y_test: the true labels
+    :param y_pred: the predicted labels
+    :param return: a dictionary containing the classification report
     """
     # Get the classification report
     report = classification_report(
@@ -56,15 +56,6 @@ def save_classification_report(method, metrics, save_dir, append=False):
     :param save_dir: the directory where the results will be saved
     :param append: whether to append to the output file or overwrite it (default: False)
     """
-    # Input validation
-    for param in metrics.values():
-        if not isinstance(float(param), float) or not 0 <= float(param) <= 1:
-            raise ValueError(
-                "Invalid parameter value: all metric parameters (except MCC) must be floats between 0 and 1.")
-        if not isinstance(float(metrics["matthews_correlation_coefficient"]), float) or not -1 <= float(metrics["matthews_correlation_coefficient"]) <= 1:
-            raise ValueError(
-                "Invalid parameter value: MCC must be a float between -1 and 1.")
-
     # File I/O error handling
     try:
         # Create a DataFrame to store the classification report

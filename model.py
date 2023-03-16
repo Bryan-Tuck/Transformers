@@ -6,7 +6,6 @@ class TweetClassifier(nn.Module):
     :param model_type: The type of model to be used (e.g., "bert-base-uncased")
     :param n_classes: Number of classes in the dataset
     """
-
     def __init__(self, model_type, n_classes):
         # Call the parent class constructor
         super(TweetClassifier, self).__init__()
@@ -18,6 +17,7 @@ class TweetClassifier(nn.Module):
         """
         :param input_ids: A batch of input ids
         :param attention_mask: A batch of attention masks
+        :returns: A batch of output
         """
         # Feed the input to the model
         _, pooled_output = self.model(

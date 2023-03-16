@@ -25,14 +25,15 @@ class TweetDataset(TensorDataset):
 
     def __len__(self):
         """
-        :Return the number of tweets in the dataset
+        :returns: the number of tweets in the dataset
         """
         return len(self.tweets)
 
     def _compute_max_len(self):
         """
-        :Compute the maximum length of the tweets and cache it.
-        :Return the 95th percentile of the lengths
+        Compute the maximum length of the tweets and cache it.
+
+        :returns: the 95th percentile of the text lengths
         """
         inputs = [self.tokenizer.encode(
             tweet, add_special_tokens=False) for tweet in self.tweets]
@@ -41,6 +42,8 @@ class TweetDataset(TensorDataset):
     def tokenize_texts(self):
         """
         Tokenize the tweets and prepare the input
+
+        :returns: input_ids
         """
         inputs = [self.tokenizer.encode(
             tweet,

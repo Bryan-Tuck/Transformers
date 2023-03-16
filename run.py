@@ -127,7 +127,7 @@ def main():
             metrics = get_classification_report(y_test, y_pred)
 
             # Save the scores
-            save_classification_report(method, metrics, save_dir=RESULTS_PATH, append=True)
+            save_classification_report(method, metrics, save_dir=RESULTS_PATH, mode='w')
 
             # Save the model
             model_path = f'E:/Transformers/saved_models/method_{method}.pth'

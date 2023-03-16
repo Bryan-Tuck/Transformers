@@ -1,6 +1,5 @@
 from sklearn.metrics import classification_report, accuracy_score, matthews_corrcoef
 from utils import get_classification_report, save_classification_report
-import pytest
 import sys
 import os
 import pandas as pd
@@ -8,9 +7,6 @@ import numpy as np
 
 # Add the path to the utils.py file to the system path
 sys.path.append('E:\Transformers')
-
-# Import the functions to test
-
 
 def test_get_classification_report():
     # define sample input data

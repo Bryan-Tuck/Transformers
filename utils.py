@@ -49,41 +49,37 @@ def get_classification_report(y_test, y_pred):
     return metrics
 
 
-def save_classification_report(method, metrics, save_dir, append=False):
+def save_classification_report(method, metrics, save_dir, filename="report.csv", mode="a", header=None):
     """
     :param method: the method name
     :param metrics: a dictionary containing the classification report
     :param save_dir: the directory where the results will be saved
-    :param append: whether to append to the output file or overwrite it (default: False)
+    :param filename: the name of the file to save the report to
+    :param mode: the file write mode, 'w' to overwrite or 'a' to append
+    :param header: the headers to include in the output file. If None, use the keys of metrics
     """
     # File I/O error handling
     try:
+        # Check if the directory to save the report exists, create it if it does not
+        os.makedirs(save_dir, exist_ok=True)
+
         # Create a DataFrame to store the classification report
+        if header is None:
+            header = list(metrics.keys())
         df = pd.DataFrame({
             "Method": [method],
-            "Precision Macro": [metrics["precision_macro"]],
-            "Recall Macro": [metrics["recall_macro"]],
-            "F1 Macro": [metrics["f1_macro"]],
-            "Precision Weighted": [metrics["precision_weighted"]],
-            "Recall Weighted": [metrics["recall_weighted"]],
-            "F1 Weighted": [metrics["f1_weighted"]],
-            "Accuracy": [metrics["accuracy_score"]],
-            "MCC": [metrics["matthews_correlation_coefficient"]]
-        })
-
-        # Check if the directory to save the report exists, create it if it does not
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+            **{k: [v] for k, v in metrics.items()}
+        }, columns=["Method"] + header)
 
         # Write the DataFrame to a CSV file
-        file_path = os.path.join(save_dir, "report.csv")
-        mode = "a" if append else "w"
-        df.to_csv(file_path, mode=mode, header=not append, index=False)
-        print(f"Classification report saved to {file_path}")
+        file_path = os.path.join(save_dir, filename)
+        df.to_csv(file_path, mode=mode, header=header is not None, index=False)
+        if mode == "w":
+            print(f"Classification report saved to {file_path}")
+        else:
+            print(f"Classification report appended to {file_path}")
     except Exception as e:
-        print(
-            f"An error occurred while writing the classification report to {save_dir}: {e}")
-
+        print(f"An error occurred while writing the classification report to {save_dir}: {e}")
 
 
 def create_plots(method, train_loss_values, val_loss_values, train_acc_values, val_acc_values):
